@@ -222,8 +222,8 @@ class RealESRGANer():
         else:
             self.process()
         output_img = self.post_process()
-        output_img = output_img.data.squeeze().float().cpu().clamp_(0, 1).numpy()
-        output_img = np.transpose(output_img[[2, 1, 0], :, :], (1, 2, 0))
+        output_img = output_img.data.squeeze(0).float().cpu().clamp_(0, 1).numpy()
+        output_img = np.transpose(output_img[::-1, :, :], (1, 2, 0))
         if img_mode == 'L':
             output_img = cv2.cvtColor(output_img, cv2.COLOR_BGR2GRAY)
 

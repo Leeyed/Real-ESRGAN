@@ -103,7 +103,7 @@ class RealESRGANDataset(data.Dataset):
                 break
             finally:
                 retry -= 1
-        img_gt = imfrombytes(img_bytes, float32=True)
+        img_gt = imfrombytes(img_bytes, self.opt.get('flag', 'color'), float32=True)
 
         # -------------------- Do augmentation for training: flip, rotation -------------------- #
         img_gt = augment(img_gt, self.opt['use_hflip'], self.opt['use_rot'])
@@ -117,6 +117,9 @@ class RealESRGANDataset(data.Dataset):
             pad_h = max(0, crop_pad_size - h)
             pad_w = max(0, crop_pad_size - w)
             img_gt = cv2.copyMakeBorder(img_gt, 0, pad_h, 0, pad_w, cv2.BORDER_REFLECT_101)
+            # 但如果输入是 (H, W, 1)，OpenCV 会自动 squeeze 掉最后一维，返回 (H', W')；
+            if img_gt.ndim == 2:
+                img_gt = img_gt[:, :, None]
         # crop
         if img_gt.shape[0] > crop_pad_size or img_gt.shape[1] > crop_pad_size:
             h, w = img_gt.shape[0:2]
