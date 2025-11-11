@@ -1,0 +1,16 @@
+python scripts/generate_meta_info.py --input datasets/DF2K/DF2K_HR datasets/DF2K/DF2K_multiscale_gray datasets/Flickr2K/Flickr2K_HR datasets/Flickr2K/Flickr2K_multiscale_gray datasets/OutDoor1K/OutDoor1K_HR datasets/OutDoor1K/OutDoor1K_multiscale_gray --root datasets datasets datasets datasets datasets datasets --meta_info datasets/meta_info/meta_info_DF2K_Flickr2K_OST1K_multiscale_gray.txt
+
+
+CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 --master_port=4321 realesrgan/train.py -opt options/train_realesrnet_x4plus.yml --launcher pytorch --debug
+
+
+CUDA_VISIBLE_DEVICES=0,1 torchrun --nproc_per_node=2 --master_port=4321 realesrgan/train.py -opt options/train_realesrnet_x4plus_1c_from_zero.yml --launcher pytorch --auto_resume
+
+
+
+# gn2
+CUDA_VISIBLE_DEVICES=0 python realesrgan/train.py -opt options/train_realesrnet_x4plus_1c_from_zero.yml  --auto_resume
+CUDA_VISIBLE_DEVICES=6 python realesrgan/train.py -opt options/train_realesrnet_x4plus_3c_from_zero.yml  --auto_resume
+
+# gn1
+CUDA_VISIBLE_DEVICES=3 python realesrgan/train.py -opt options/train_realesrnet_no_jpeg_x4plus_1c_from_zero.yml  --auto_resume
