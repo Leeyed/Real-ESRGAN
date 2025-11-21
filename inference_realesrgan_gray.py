@@ -83,6 +83,11 @@ def main():
             'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-wdn-x4v3.pth',
             'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth'
         ]
+    elif args.model_name == 'RealESRGAN_x4plus_gray':
+        model = RRDBNet(num_in_ch=1, num_out_ch=1, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
+        netscale = 4
+        print(args.model_name)
+    # print(22222, model)
 
     # determine model paths
     if args.model_path is not None:
@@ -134,20 +139,19 @@ def main():
         imgname, extension = os.path.splitext(os.path.basename(path))
         print('Testing', idx, imgname)
 
-        img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
-        if len(img.shape) == 3 and img.shape[2] == 4:
-            img_mode = 'RGBA'
-        else:
-            img_mode = None
+        img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        img_mode = 'GRAY'
+        img = img.astype('float32')
 
         try:
-            if args.face_enhance:
-                _, _, output = face_enhancer.enhance(img, has_aligned=False, only_center_face=False, paste_back=True)
-            else:
-                output, _ = upsampler.enhance(img, outscale=args.outscale)
+            # Expand dims to HxWx1 (RealESRGANer expects channel last)
+            img_in = img[:, :, None]
+            output, _ = upsampler.enhance(img_in, outscale=args.outscale)
+
         except RuntimeError as error:
             print('Error', error)
             print('If you encounter CUDA out of memory, try to set --tile with a smaller number.')
+
         else:
             if args.ext == 'auto':
                 extension = extension[1:]
@@ -159,8 +163,8 @@ def main():
                 save_path = os.path.join(args.output, f'{imgname}.{extension}')
             else:
                 save_path = os.path.join(args.output, f'{imgname}_{args.suffix}.{extension}')
+                
             cv2.imwrite(save_path, output)
-
 
 if __name__ == '__main__':
     main()

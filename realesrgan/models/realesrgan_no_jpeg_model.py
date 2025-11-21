@@ -12,7 +12,7 @@ from torch.nn import functional as F
 
 
 @MODEL_REGISTRY.register()
-class RealESRGANModel(SRGANModel):
+class RealESRGANNoJpegModel(SRGANModel):
     """RealESRGAN Model for Real-ESRGAN: Training Real-World Blind Super-Resolution with Pure Synthetic Data.
 
     It mainly performs:
@@ -21,8 +21,8 @@ class RealESRGANModel(SRGANModel):
     """
 
     def __init__(self, opt):
-        super(RealESRGANModel, self).__init__(opt)
-        self.jpeger = DiffJPEG(differentiable=False).cuda()  # simulate JPEG compression artifacts
+        super(RealESRGANNoJpegModel, self).__init__(opt)
+        # self.jpeger = DiffJPEG(differentiable=False).cuda()  # simulate JPEG compression artifacts
         self.usm_sharpener = USMSharp().cuda()  # do usm sharpening
         self.queue_size = opt.get('queue_size', 180)
 
@@ -105,15 +105,15 @@ class RealESRGANModel(SRGANModel):
                     rounds=False)
             # JPEG compression
             is_gray = out.shape[1] == 1 # check whether the image is grayscale
-            if is_gray:  # grayscale image
-                out = out.repeat(1, 3, 1, 1)
+            # if is_gray:  # grayscale image
+            #     out = out.repeat(1, 3, 1, 1)
                 
-            jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt['jpeg_range'])
-            out = torch.clamp(out, 0, 1)  # clamp to [0, 1], otherwise JPEGer will result in unpleasant artifacts
-            out = self.jpeger(out, quality=jpeg_p)
+            # jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt['jpeg_range'])
+            # out = torch.clamp(out, 0, 1)  # clamp to [0, 1], otherwise JPEGer will result in unpleasant artifacts
+            # out = self.jpeger(out, quality=jpeg_p)
 
-            if is_gray:  # grayscale image
-                out = out[:, 0:1, :, :]
+            # if is_gray:  # grayscale image
+            #     out = out[:, 0:1, :, :]
             # ----------------------- The second degradation process ----------------------- #
             # blur
             if np.random.uniform() < self.opt['second_blur_prob']:
@@ -155,22 +155,22 @@ class RealESRGANModel(SRGANModel):
                 out = F.interpolate(out, size=(ori_h // self.opt['scale'], ori_w // self.opt['scale']), mode=mode)
                 out = filter2D(out, self.sinc_kernel)
                 # JPEG compression
-                if is_gray:  # grayscale image
-                    out = out.repeat(1, 3, 1, 1)
-                jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt['jpeg_range2'])
-                out = torch.clamp(out, 0, 1)
-                out = self.jpeger(out, quality=jpeg_p)
-                if is_gray:  # grayscale image
-                    out = out[:, 0:1, :, :]
+                # if is_gray:  # grayscale image
+                #     out = out.repeat(1, 3, 1, 1)
+                # jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt['jpeg_range2'])
+                # out = torch.clamp(out, 0, 1)
+                # out = self.jpeger(out, quality=jpeg_p)
+                # if is_gray:  # grayscale image
+                #     out = out[:, 0:1, :, :]
             else:
                 # JPEG compression
-                if is_gray:  # grayscale image
-                    out = out.repeat(1, 3, 1, 1)
-                jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt['jpeg_range2'])
-                out = torch.clamp(out, 0, 1)
-                out = self.jpeger(out, quality=jpeg_p)
-                if is_gray:  # grayscale image
-                    out = out[:, 0:1, :, :]
+                # if is_gray:  # grayscale image
+                #     out = out.repeat(1, 3, 1, 1)
+                # jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt['jpeg_range2'])
+                # out = torch.clamp(out, 0, 1)
+                # out = self.jpeger(out, quality=jpeg_p)
+                # if is_gray:  # grayscale image
+                #     out = out[:, 0:1, :, :]
                 # resize back + the final sinc filter
                 mode = random.choice(['area', 'bilinear', 'bicubic'])
                 out = F.interpolate(out, size=(ori_h // self.opt['scale'], ori_w // self.opt['scale']), mode=mode)

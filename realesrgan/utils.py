@@ -92,7 +92,6 @@ class RealESRGANer():
         self.img = img.unsqueeze(0).to(self.device)
         if self.half:
             self.img = self.img.half()
-
         # pre_pad
         if self.pre_pad != 0:
             self.img = F.pad(self.img, (0, self.pre_pad, 0, self.pre_pad), 'reflect')
@@ -211,10 +210,12 @@ class RealESRGANer():
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             if alpha_upsampler == 'realesrgan':
                 alpha = cv2.cvtColor(alpha, cv2.COLOR_GRAY2RGB)
-        else:
+        elif img.shape[2] == 1:  # fake RGB image
+            img_mode = 'GRAY'
+            img = img
+        else: # RGB image
             img_mode = 'RGB'
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
         # ------------------- process image (without the alpha channel) ------------------- #
         self.pre_process(img)
         if self.tile_size > 0:
@@ -224,8 +225,10 @@ class RealESRGANer():
         output_img = self.post_process()
         output_img = output_img.data.squeeze(0).float().cpu().clamp_(0, 1).numpy()
         output_img = np.transpose(output_img[::-1, :, :], (1, 2, 0))
-        if img_mode == 'L':
+        if img_mode == 'L' :
             output_img = cv2.cvtColor(output_img, cv2.COLOR_BGR2GRAY)
+        elif img_mode == 'GRAY':
+            output_img = output_img[:, :, 0]
 
         # ------------------- process the alpha channel if necessary ------------------- #
         if img_mode == 'RGBA':
