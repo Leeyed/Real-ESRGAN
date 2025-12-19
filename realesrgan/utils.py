@@ -264,7 +264,35 @@ class RealESRGANer():
                 ), interpolation=cv2.INTER_LANCZOS4)
 
         return output, img_mode
-
+    
+    @torch.no_grad()
+    def enhance2(self, img, outscale=None, alpha_upsampler='realesrgan'):
+        h_input, w_input = img.shape[0:2]
+        print(f"img min, max: {img.min()}, {img.max()}")
+        self.pre_process(img)
+        if self.tile_size > 0:
+            self.tile_process()
+        else:
+            self.process()
+        output_img = self.post_process()
+        output_img = output_img.data.squeeze(0).float().cpu().clamp_(-1, 1).numpy()
+        output_img = np.transpose(output_img[::-1, :, :], (1, 2, 0))
+        return output_img, None
+    
+    
+    @torch.no_grad()
+    def enhance3(self, img, outscale=None, alpha_upsampler='realesrgan'):
+        h_input, w_input = img.shape[0:2]
+        print(f"img min, max: {img.min()}, {img.max()}")
+        self.pre_process(img)
+        if self.tile_size > 0:
+            self.tile_process()
+        else:
+            self.process()
+        output_img = self.post_process()
+        output_img = output_img.data.squeeze(0).float().cpu().clamp_(0, 1).numpy()
+        output_img = np.transpose(output_img[::-1, :, :], (1, 2, 0))
+        return output_img, None
 
 class PrefetchReader(threading.Thread):
     """Prefetch images.

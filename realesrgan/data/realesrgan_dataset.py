@@ -104,6 +104,8 @@ class RealESRGANDataset(data.Dataset):
             finally:
                 retry -= 1
         img_gt = imfrombytes(img_bytes, self.opt.get('flag', 'color'), float32=True)
+        if img_gt.ndim == 2:
+            img_gt = img_gt[:, :, None]
 
         # -------------------- Do augmentation for training: flip, rotation -------------------- #
         img_gt = augment(img_gt, self.opt['use_hflip'], self.opt['use_rot'])

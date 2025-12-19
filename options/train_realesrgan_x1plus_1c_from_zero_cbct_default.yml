@@ -1,7 +1,7 @@
 # general settings
-name: train_RealESRGANx4plus_50K_gray_from_zero
+name: train_RealESRGANx1plus_50K_gray_from_zero_cbct_default_loss
 model_type: RealESRGANModel
-scale: 4
+scale: 1
 num_gpu: auto  # auto: can infer from your visible devices automatically. official: 4 GPUs
 manual_seed: 0
 
@@ -12,35 +12,38 @@ percep_gt_usm: True
 gan_gt_usm: False
 
 # the first degradation process
-resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
+resize_prob: [0,0,1]  # up, down, keep
 resize_range: [0.15, 1.5]
 gaussian_noise_prob: 0.5
 noise_range: [1, 30]
 poisson_scale_range: [0.05, 3]
 gray_noise_prob: 0.4
-jpeg_range: [30, 95]
+jpeg_range: ~
 
 # the second degradation process
-second_blur_prob: 0.8
-resize_prob2: [0.3, 0.4, 0.3]  # up, down, keep
+second_blur_prob: 0.1
+resize_prob2: [0,0,1]  # up, down, keep
 resize_range2: [0.3, 1.2]
 gaussian_noise_prob2: 0.5
 noise_range2: [1, 25]
 poisson_scale_range2: [0.05, 2.5]
 gray_noise_prob2: 0.4
-jpeg_range2: [30, 95]
+jpeg_range2: ~
 
-gt_size: 256
+high_order_degradation: False # do not use the high-order degradation generation process
+
+gt_size: 480
 queue_size: 180
 
 # dataset and data loader settings
 datasets:
   train:
     name: DF2K+OST
-    type: RealESRGANDataset
-    dataroot_gt: datasets
+    type: RealESRGANPairedDataset
+    dataroot_gt: datasets/CBCT
+    dataroot_lq: datasets/CBCT
     flag: grayscale
-    meta_info: datasets/meta_info/meta_info_DF2K_Flickr2K_OST1K_multiscale_gray.txt
+    meta_info: datasets/meta_info/cbct2ct_paired.txt
     io_backend:
       type: disk
 
@@ -60,16 +63,16 @@ datasets:
     betag_range2: [0.5, 4]
     betap_range2: [1, 2]
 
-    final_sinc_prob: 0.8
+    final_sinc_prob: 0.1
 
-    gt_size: 256
+    gt_size: 480
     use_hflip: True
     use_rot: False
 
     # data loader
     use_shuffle: true
     num_worker_per_gpu: 5
-    batch_size_per_gpu: 12
+    batch_size_per_gpu: 4
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
@@ -90,6 +93,7 @@ network_g:
   num_feat: 64
   num_block: 23
   num_grow_ch: 32
+  scale: 1
 
 network_d:
   type: UNetDiscriminatorSN
@@ -100,7 +104,7 @@ network_d:
 # path
 path:
   # use the pre-trained Real-ESRNet model
-  pretrain_network_g: experiments/train_RealESRNetx4plus_50K_gray_from_zero/models/net_g_1000000.pth
+  pretrain_network_g: experiments/train_RealESRNetx2plus_7k_cbct/models/net_g_50000.pth
   param_key_g: params_ema
   strict_load_g: true
   resume_state: ~
@@ -121,10 +125,10 @@ train:
 
   scheduler:
     type: MultiStepLR
-    milestones: [400000]
+    milestones: [25000, 40000]
     gamma: 0.5
 
-  total_iter: 400000
+  total_iter: 50000
   warmup_iter: -1  # no warm up
 
   # losses
@@ -174,7 +178,7 @@ train:
 # logging settings
 logger:
   print_freq: 100
-  save_checkpoint_freq: !!float 5e3
+  save_checkpoint_freq: !!float 5e2
   use_tb_logger: true
   wandb:
     project: ~
